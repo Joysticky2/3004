@@ -52,15 +52,11 @@ export default function BrandProfile() {
     const { data: { user }, error: uErr } = await supabase.auth.getUser();
     if (uErr || !user) { setErr(uErr?.message ?? 'Not authenticated'); setSaving(false); return; }
 
-    const up = {
-      ...data,
-      user_id: user.id,
-      updated_at: new Date().toISOString(),
-    };
+    const up = { ...data, user_id: user.id, updated_at: new Date().toISOString() };
 
     const { error } = await supabase
       .from('profiles')
-      .upsert(up, { onConflict: 'user_id' }) // requires unique(user_id) on profiles (recommended)
+      .upsert(up, { onConflict: 'user_id' })
       .select()
       .single();
 
@@ -71,83 +67,122 @@ export default function BrandProfile() {
     }
 
     setMsg('Profile saved!');
-    // Immediately return to dashboard after successful save
-    router.push('/dashboard');
+    router.push('/dashboard'); // return after save
   };
 
   if (loading) {
-    return <div className="max-w-2xl mx-auto p-6 text-gray-400">Loading…</div>;
+    return (
+      <main className="min-h-screen bg-slate-950 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-10 text-slate-300">Loading…</div>
+      </main>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 p-6">
-      <h1 className="text-2xl font-semibold">Brand Profile</h1>
+    <main className="min-h-screen bg-slate-950 text-white">
+      {/* Top bar */}
+      <header className="border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <h1 className="text-lg font-semibold">
+            <span className="text-indigo-400">AI</span> Content Engine — Brand Profile
+          </h1>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-3 py-1.5 rounded-lg border border-white/15 hover:border-white/30 text-sm"
+          >
+            ← Return to Dashboard
+          </button>
+        </div>
+      </header>
 
-      <div className="space-y-1">
-        <label className="block text-sm">Brand tone</label>
-        <select
-          className="w-full border rounded p-2 bg-white text-black"
-          value={data.brand_tone}
-          onChange={e => setData(d => ({ ...d, brand_tone: e.target.value }))}
-        >
-          <option value="friendly">Friendly</option>
-          <option value="professional">Professional</option>
-          <option value="playful">Playful</option>
-          <option value="confident">Confident</option>
-          <option value="informative">Informative</option>
-        </select>
+      {/* Content */}
+      <div className="max-w-3xl mx-auto px-6 py-8">
+        {/* Status messages */}
+        {(err || msg) && (
+          <div
+            className={`mb-4 rounded-lg border p-3 text-sm ${
+              err
+                ? 'border-red-500/50 bg-red-500/10 text-red-300'
+                : 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
+            }`}
+          >
+            {err ?? msg}
+          </div>
+        )}
+
+        <div className="rounded-xl border border-white/10 bg-slate-900/60 p-6 space-y-5">
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Brand tone
+            </label>
+            <select
+              className="w-full rounded-lg border border-white/10 bg-slate-800/70 px-3 py-2 text-white"
+              value={data.brand_tone}
+              onChange={e => setData(d => ({ ...d, brand_tone: e.target.value }))}
+            >
+              <option value="friendly">Friendly</option>
+              <option value="professional">Professional</option>
+              <option value="playful">Playful</option>
+              <option value="confident">Confident</option>
+              <option value="informative">Informative</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Industry
+            </label>
+            <input
+              className="w-full rounded-lg border border-white/10 bg-slate-800/70 px-3 py-2 text-white placeholder-slate-400"
+              placeholder="e.g., Cafe, Landscaping, Accounting"
+              value={data.industry}
+              onChange={e => setData(d => ({ ...d, industry: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Products / services
+            </label>
+            <textarea
+              className="w-full min-h-[110px] rounded-lg border border-white/10 bg-slate-800/70 px-3 py-2 text-white placeholder-slate-400"
+              placeholder="Comma-separated list (e.g., soy candles, wax melts, gift boxes)"
+              value={data.product_list}
+              onChange={e => setData(d => ({ ...d, product_list: e.target.value }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-slate-400 mb-1">
+              Target audience
+            </label>
+            <textarea
+              className="w-full min-h-[110px] rounded-lg border border-white/10 bg-slate-800/70 px-3 py-2 text-white placeholder-slate-400"
+              placeholder="e.g., Young adults in Melbourne interested in wellness"
+              value={data.target_audience}
+              onChange={e => setData(d => ({ ...d, target_audience: e.target.value }))}
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            <button
+              className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 text-black font-medium disabled:opacity-60"
+              onClick={save}
+              disabled={saving}
+            >
+              {saving ? 'Saving…' : 'Save & Return'}
+            </button>
+
+            <button
+              type="button"
+              className="px-4 py-2 rounded-lg border border-white/15 hover:border-white/30"
+              onClick={() => router.push('/dashboard')}
+            >
+              Return without saving
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div className="space-y-1">
-        <label className="block text-sm">Industry</label>
-        <input
-          className="w-full border rounded p-2 bg-white text-black"
-          placeholder="e.g., Cafe, Landscaping, Accounting"
-          value={data.industry}
-          onChange={e => setData(d => ({ ...d, industry: e.target.value }))}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-sm">Products / services</label>
-        <textarea
-          className="w-full border rounded p-2 min-h-[90px] bg-white text-black"
-          placeholder="Comma-separated list (e.g., soy candles, wax melts, gift boxes)"
-          value={data.product_list}
-          onChange={e => setData(d => ({ ...d, product_list: e.target.value }))}
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="block text-sm">Target audience</label>
-        <textarea
-          className="w-full border rounded p-2 min-h-[90px] bg-white text-black"
-          placeholder="e.g., Young adults in Melbourne interested in wellness"
-          value={data.target_audience}
-          onChange={e => setData(d => ({ ...d, target_audience: e.target.value }))}
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
-          onClick={save}
-          disabled={saving}
-        >
-          {saving ? 'Saving…' : 'Save & Return'}
-        </button>
-
-        <button
-          type="button"
-          className="px-4 py-2 rounded border border-slate-300 text-slate-800 hover:bg-slate-100"
-          onClick={() => router.push('/dashboard')}
-        >
-          Return without saving
-        </button>
-
-        {msg && <span className="text-green-600 text-sm">{msg}</span>}
-        {err && <span className="text-red-600 text-sm">{err}</span>}
-      </div>
-    </div>
+    </main>
   );
 }
